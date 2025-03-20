@@ -1,0 +1,86 @@
+/* Update the stats grid layout */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Two columns */
+  gap: 24px;
+  padding: 20px;
+}
+
+.stat-tile {
+  background: white;
+  border-radius: 20px; /* Increased border radius */
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  box-shadow: 0 4px 6px rgba(255, 255, 255, 0.973);
+  transition: transform 0.2s ease;
+}
+
+.stat-tile:hover {
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  background: #f8f9fa;
+  border-radius: 15px; /* Rounded corners for icon background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-icon span {
+  font-size: 24px;
+}
+
+.stat-info {
+  flex: 1;
+}
+
+.stat-title {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.stat-count {
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr; /* Single column on mobile */
+    padding: 16px;
+  }
+
+  .stat-tile {
+    padding: 20px;
+  }
+
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .stat-count {
+    font-size: 28px;
+  }
+}
+
+/* Optional: Add some hover effects */
+.stat-tile:hover .stat-icon {
+  background: #6c5ce7;
+  color: white;
+}
+
+.stat-tile:hover .stat-icon span {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+} 

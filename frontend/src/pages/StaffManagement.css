@@ -1,0 +1,177 @@
+.staff-page {
+  padding: 20px;
+  background: #f5f5f5;
+}
+
+.page-title {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.staff-form-container {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.generate-btn {
+  background: #4f4199;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.search-box {
+  display: flex;
+  margin: 10px 0;
+  gap: 10px;
+}
+
+.search-box input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  background-color: transparent;
+  border-radius: 5px;
+  width: 200px;
+}
+
+.search-btn {
+  background: #ffd93d;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.input-grid input,
+.input-grid select {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 100%;
+  background: white;
+}
+
+.input-grid textarea {
+  grid-column: span 2;
+  padding: 12px;
+  border: 1px solid #ddd;
+  background-color: transparent;
+  border-radius: 5px;
+  width: 100%;
+  min-height: 100px;
+  resize: vertical;
+}
+
+.button-group {
+  grid-column: span 2;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.register-btn {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 30px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.update-btn {
+  background: #6c5ce7;
+  color: white;
+  border: none;
+  padding: 10px 30px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background: #000000;
+  color: rgb(189, 189, 189);
+  border: none;
+  padding: 10px 30px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Input focus states */
+.input-grid input:focus,
+.input-grid select:focus,
+.input-grid textarea:focus {
+  outline: none;
+  border-color: #6c5ce7;
+}
+
+/* Select styling */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  padding-right: 30px !important;
+}
+
+/* Placeholder styling */
+::placeholder {
+  color: #999;
+}
+
+/* Table styles */
+.recent-doctors {
+  margin-top: 20px;
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  color: #666;
+  font-weight: 500;
+}
+
+.status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.status.online {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status.offline {
+  background: #ffebee;
+  color: #d32f2f;
+} 
