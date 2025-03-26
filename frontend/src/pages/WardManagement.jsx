@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import './WardManagement.css';
 
 const WardManagement = () => {
@@ -9,6 +10,11 @@ const WardManagement = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredWards, setFilteredWards] = useState([]);
+  const [stats, setStats] = useState({
+    totalWards: 0,
+    availableBeds: 0,
+    occupancyRate: 0
+  });
 
   const [formData, setFormData] = useState({
     wardNumber: '',
@@ -32,10 +38,9 @@ const WardManagement = () => {
 
   const fetchWards = async () => {
     try {
-      // Replace with your actual API endpoint
-      const response = await fetch("/src/assets/wards.json");
-      const data = await response.json();
-      setWards(data);
+      const response = await axios.get('http://localhost:5000/api/wards');
+      setWards(response.data.wards);
+      setStats(response.data.stats);
       setLoading(false);
     } catch (err) {
       setError('Failed to fetch wards data');
@@ -57,43 +62,62 @@ const WardManagement = () => {
     setIsEditing(true);
   };
 
-  const handleDelete = (wardId) => {
+  const handleDelete = async (wardId) => {
     if (window.confirm('Are you sure you want to delete this ward?')) {
-      setWards(prevWards => prevWards.filter(ward => ward.id !== wardId));
-      if (selectedWard?.id === wardId) {
-        handleCancel();
+      try {
+        await axios.delete(`http://localhost:5000/api/wards/${wardId}`);
+        fetchWards(); // Refresh the list
+        if (selectedWard?._id === wardId) {
+          handleCancel();
+        }
+      } catch (error) {
+        setError('Failed to delete ward');
       }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null); // Clear any previous errors
     
     try {
       // Validation
-      if (!formData.wardNumber || !formData.wardType || !formData.capacity) {
-        alert('Please fill in all required fields');
+      if (!formData.wardNumber || !formData.wardType || !formData.capacity || !formData.floor) {
+        setError('Please fill in all required fields');
         return;
       }
 
-      if (isEditing) {
-        // Update existing ward
-        setWards(prevWards =>
-          prevWards.map(ward =>
-            ward.id === selectedWard.id ? { ...formData, id: ward.id } : ward
-          )
-        );
-      } else {
-        // Add new ward
-        setWards(prevWards => [
-          ...prevWards,
-          { ...formData, id: Math.max(...prevWards.map(w => w.id)) + 1 }
-        ]);
+      // Convert capacity and occupancy to numbers
+      const wardData = {
+        ...formData,
+        capacity: parseInt(formData.capacity),
+        currentOccupancy: formData.currentOccupancy ? parseInt(formData.currentOccupancy) : 0
+      };
+
+      // Validate occupancy doesn't exceed capacity
+      if (wardData.currentOccupancy > wardData.capacity) {
+        setError('Current occupancy cannot exceed ward capacity');
+        return;
       }
 
-      handleCancel();
+      let response;
+      if (isEditing) {
+        // Update existing ward
+        response = await axios.put(`http://localhost:5000/api/wards/${selectedWard._id}`, wardData);
+        alert('Ward updated successfully!');
+      } else {
+        // Add new ward
+        response = await axios.post('http://localhost:5000/api/wards', wardData);
+        alert(`New ward ${response.data.wardNumber} added successfully!`);
+      }
+
+      fetchWards(); // Refresh the list
+      handleCancel(); // Reset form
     } catch (err) {
-      setError('Failed to save ward');
+      console.error('Error saving ward:', err);
+      const errorMessage = err.response?.data?.message || 'Failed to save ward. Please try again.';
+      setError(errorMessage);
+      alert(errorMessage);
     }
   };
 
@@ -118,7 +142,7 @@ const WardManagement = () => {
 
   const handleSearch = () => {
     if (!searchQuery) {
-      alert('Please enter a ward number');
+      setFilteredWards([]);
       return;
     }
 
@@ -156,6 +180,21 @@ const WardManagement = () => {
         </div>
       </div>
 
+      <div className="ward-stats">
+        <div className="stat-card">
+          <h4>Total Wards</h4>
+          <p>{stats.totalWards}</p>
+        </div>
+        <div className="stat-card">
+          <h4>Available Beds</h4>
+          <p>{stats.availableBeds}</p>
+        </div>
+        <div className="stat-card">
+          <h4>Occupancy Rate</h4>
+          <p>{stats.occupancyRate}%</p>
+        </div>
+      </div>
+
       <div className="ward-form-container">
         <form onSubmit={handleSubmit}>
           <div className="form-grid">
@@ -176,6 +215,7 @@ const WardManagement = () => {
                 name="wardType"
                 value={formData.wardType}
                 onChange={handleInputChange}
+                required
               >
                 <option value="">Select Ward Type</option>
                 <option value="General">General</option>
@@ -196,6 +236,7 @@ const WardManagement = () => {
                 value={formData.capacity}
                 onChange={handleInputChange}
                 min="1"
+                required
               />
             </div>
 
@@ -242,6 +283,7 @@ const WardManagement = () => {
                 name="floor"
                 value={formData.floor}
                 onChange={handleInputChange}
+                required
               >
                 <option value="">Select Floor</option>
                 <option value="Ground Floor">Ground Floor</option>
@@ -305,21 +347,6 @@ const WardManagement = () => {
         </form>
       </div>
 
-      <div className="ward-stats">
-        <div className="stat-card">
-          <h4>Total Wards</h4>
-          <p>{wards.length}</p>
-        </div>
-        <div className="stat-card">
-          <h4>Available Beds</h4>
-          <p>{wards.reduce((acc, ward) => acc + (ward.capacity - ward.currentOccupancy), 0)}</p>
-        </div>
-        <div className="stat-card">
-          <h4>Occupancy Rate</h4>
-          <p>{Math.round(wards.reduce((acc, ward) => acc + (ward.currentOccupancy / ward.capacity * 100), 0) / wards.length || 0)}%</p>
-        </div>
-      </div>
-
       <div className="ward-list">
         <h3>Ward List</h3>
         {loading ? (
@@ -343,7 +370,7 @@ const WardManagement = () => {
             </thead>
             <tbody>
               {(filteredWards.length > 0 ? filteredWards : wards).map(ward => (
-                <tr key={ward.id}>
+                <tr key={ward._id}>
                   <td>{ward.wardNumber}</td>
                   <td>{ward.wardType}</td>
                   <td>{ward.capacity}</td>
@@ -361,12 +388,12 @@ const WardManagement = () => {
                   </td>
                   <td>{ward.nurseInCharge}</td>
                   <td>
-                    <span className={`status-badge ${ward.status.toLowerCase()}`}>
+                    <span className={`status-badge ${ward.status?.toLowerCase()}`}>
                       {ward.status}
                     </span>
                   </td>
                   <td>{ward.floor}</td>
-                  <td>{ward.nextMaintenance}</td>
+                  <td>{ward.nextMaintenance ? new Date(ward.nextMaintenance).toLocaleDateString() : '-'}</td>
                   <td className="actions">
                     <button 
                       className="edit-btn" 
@@ -377,7 +404,7 @@ const WardManagement = () => {
                     </button>
                     <button 
                       className="delete-btn" 
-                      onClick={() => handleDelete(ward.id)}
+                      onClick={() => handleDelete(ward._id)}
                       title="Delete"
                     >
                       ✖

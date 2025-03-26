@@ -228,23 +228,49 @@ const StaffManagement = () => {
     }
   };
 
-  // Group best doctors by specialization
-  const bestDoctorsBySpecialization = staff
-    .filter(member => member.role === 'Doctor')
-    .reduce((acc, doctor) => {
-      if (!acc[doctor.specialization]) {
-        acc[doctor.specialization] = [];
-      }
-      acc[doctor.specialization].push(doctor);
-      return acc;
-    }, {});
+  // Calculate age from date of birth
+  const calculateAge = (dob) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
 
-  // Sort doctors within each specialization by experience
-  Object.keys(bestDoctorsBySpecialization).forEach(specialization => {
-    bestDoctorsBySpecialization[specialization].sort((a, b) => 
-      b.yearsOfExperience - a.yearsOfExperience
-    );
-  });
+  // Group and sort best doctors by specialization, considering both age and experience
+  const getBestDoctorsBySpecialization = () => {
+    const doctorsBySpecialization = staff
+      .filter(member => member.role === 'Doctor')
+      .reduce((acc, doctor) => {
+        if (!acc[doctor.specialization]) {
+          acc[doctor.specialization] = [];
+        }
+        // Calculate age for the doctor
+        const age = doctor.dob ? calculateAge(doctor.dob) : 0;
+        acc[doctor.specialization].push({
+          ...doctor,
+          age: age
+        });
+        return acc;
+      }, {});
+
+    // Sort doctors within each specialization by experience and age
+    Object.keys(doctorsBySpecialization).forEach(specialization => {
+      doctorsBySpecialization[specialization].sort((a, b) => {
+        // First sort by experience
+        const experienceDiff = b.yearsOfExperience - a.yearsOfExperience;
+        if (experienceDiff !== 0) return experienceDiff;
+        // If experience is the same, sort by age
+        return b.age - a.age;
+      });
+    });
+
+    return doctorsBySpecialization;
+  };
 
   // Group best nurses by department
   const bestNursesByDepartment = staff
@@ -557,28 +583,37 @@ const StaffManagement = () => {
         {/* Best Doctors Section */}
         <div className="staff-section">
           <h3>Best Doctors</h3>
-          {Object.entries(bestDoctorsBySpecialization).map(([specialization, doctors]) => (
+          {Object.entries(getBestDoctorsBySpecialization()).map(([specialization, doctors]) => (
             <div key={specialization} className="specialization-group">
               <h4>{specialization}</h4>
               <table>
                 <thead>
                   <tr>
                     <th>Name</th>
+                    <th>Age</th>
                     <th>Experience</th>
                     <th>Contact</th>
                     <th>Status</th>
+                    <th>Rating</th>
                   </tr>
                 </thead>
                 <tbody>
                   {doctors.slice(0, 3).map(doctor => (
                     <tr key={doctor.id}>
                       <td>{doctor.firstName} {doctor.lastName}</td>
+                      <td>{doctor.age} years</td>
                       <td>{doctor.yearsOfExperience} years</td>
                       <td>{doctor.mobile}</td>
                       <td>
                         <span className={`status ${doctor.status.toLowerCase()}`}>
                           {doctor.status}
                         </span>
+                      </td>
+                      <td>
+                        <div className="doctor-rating">
+                          {'★'.repeat(Math.min(5, Math.ceil(doctor.yearsOfExperience/5)))}
+                          {'☆'.repeat(Math.max(0, 5 - Math.ceil(doctor.yearsOfExperience/5)))}
+                        </div>
                       </td>
                     </tr>
                   ))}

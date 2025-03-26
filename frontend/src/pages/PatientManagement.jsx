@@ -19,6 +19,7 @@ const PatientManagement = () => {
     address: '',
     gender: '',
     governmentScheme: '',
+    otherScheme: '',
     password: '',
     confirmPassword: ''
   });
@@ -32,7 +33,7 @@ const PatientManagement = () => {
     "ECHS": "Ex-Servicemen Contributory Health Scheme",
     "State Government": "State-specific health coverage",
     "Railway": "Railway employees health scheme",
-    "None": "No government scheme"
+    "Other": "Other government scheme"
   };
 
   useEffect(() => {
@@ -63,16 +64,37 @@ const PatientManagement = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'dateOfBirth') {
+      // Calculate age when date of birth changes
+      const today = new Date();
+      const birthDate = new Date(value);
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        age: age.toString()
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleAdd = async () => {
     try {
       const response = await axios.post('http://localhost:5000/api/patients', formData);
+      // Update patients list with the new patient (including patientId)
       setPatients([...patients, response.data]);
+      // Show the patients list after adding a new patient
       setFormData({
         firstName: '',
         lastName: '',
@@ -83,12 +105,15 @@ const PatientManagement = () => {
         address: '',
         gender: '',
         governmentScheme: '',
+        otherScheme: '',
         password: '',
         confirmPassword: ''
       });
       setShowForm(false);
+      setShowExistingPatients(true);
     } catch (error) {
       console.error('Error adding patient:', error);
+      alert('Error adding patient: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -211,24 +236,40 @@ const PatientManagement = () => {
               <option value="Female">Female</option>
               <option value="Other">Other</option>
             </select>
-            <select
-              name="governmentScheme"
-              value={formData.governmentScheme}
-              onChange={handleInputChange}
-              className="scheme-select"
-            >
-              <option value="">Select Government Scheme</option>
-              {Object.entries(governmentSchemes).map(([scheme, description]) => (
-                <option key={scheme} value={scheme}>
-                  {scheme}
-                </option>
-              ))}
-            </select>
+            <div className="scheme-select-container">
+              <select
+                name="governmentScheme"
+                value={formData.governmentScheme}
+                onChange={handleInputChange}
+                className="scheme-select"
+              >
+                <option value="">Select Government Scheme</option>
+                {Object.entries(governmentSchemes).map(([scheme, description]) => (
+                  <option key={scheme} value={scheme}>
+                    {scheme}
+                  </option>
+                ))}
+              </select>
+              {formData.governmentScheme === "Other" && (
+                <input
+                  type="text"
+                  name="otherScheme"
+                  placeholder="Enter other scheme name"
+                  value={formData.otherScheme}
+                  onChange={handleInputChange}
+                  className="other-scheme-input"
+                />
+              )}
+            </div>
           </div>
 
-          {formData.governmentScheme && formData.governmentScheme !== "None" && (
+          {formData.governmentScheme && (
             <div className="scheme-info">
-              <p>{governmentSchemes[formData.governmentScheme]}</p>
+              <p>
+                {formData.governmentScheme === "Other" 
+                  ? `Custom Scheme: ${formData.otherScheme}`
+                  : governmentSchemes[formData.governmentScheme]}
+              </p>
             </div>
           )}
 
@@ -283,6 +324,7 @@ const PatientManagement = () => {
                   <th>Date of birth</th>
                   <th>Gender</th>
                   <th>Government Scheme</th>
+                  <th>Claims Used</th>
                   <th>Address</th>
                   <th>Actions</th>
                 </tr>
@@ -290,15 +332,27 @@ const PatientManagement = () => {
               <tbody>
                 {filteredPatients.map(patient => (
                   <tr key={patient._id}>
-                    <td>{patient._id}</td>
+                    <td>
+                      <span className="patient-id">{patient.patientId}</span>
+                    </td>
                     <td>{patient.firstName}</td>
                     <td>{patient.lastName}</td>
                     <td>{patient.age}</td>
                     <td>{patient.email}</td>
                     <td>{patient.mobileNumber}</td>
-                    <td>{new Date(patient.dateOfBirth).toLocaleDateString()}</td>
+                    <td>{patient.dateOfBirth ? new Date(patient.dateOfBirth).toLocaleDateString() : '-'}</td>
                     <td>{patient.gender}</td>
-                    <td>{patient.governmentScheme || 'None'}</td>
+                    <td>
+                      {patient.governmentScheme === 'Other' ? patient.otherScheme : patient.governmentScheme || 'None'}
+                    </td>
+                    <td>
+                      <span className={`claims-badge ${patient.schemeClaims >= 2 ? 'claims-max' : ''}`}>
+                        {patient.schemeClaims}/2
+                        {patient.schemeClaims >= 2 && 
+                          <span className="claims-warning"> (Max reached)</span>
+                        }
+                      </span>
+                    </td>
                     <td>{patient.address}</td>
                     <td>
                       <button className="edit-btn" onClick={() => {
